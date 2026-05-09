@@ -24,12 +24,11 @@ class KittenTTS:
             
         self.model = download_from_huggingface(repo_id=repo_id, cache_dir=cache_dir, backend=backend)
     
-    def normalize_text(self, text, locale="en-US", domain="general-read-aloud", return_spans=False):
-        """Normalize text for read-aloud synthesis without generating audio."""
-        return normalize_text(text, locale=locale, domain=domain, return_spans=return_spans)
+    def normalize_text(self, text, locale="en-US", return_spans=False):
+        """Normalize text for TTS without generating audio."""
+        return normalize_text(text, locale=locale, return_spans=return_spans)
 
-    def generate(self, text, voice="expr-voice-5-m", speed=1.0, clean_text=False,
-                 normalize=None, locale="en-US", domain="general-read-aloud"):
+    def generate(self, text, voice="expr-voice-5-m", speed=1.0, clean_text=False):
         """Generate audio from text.
         
         Args:
@@ -41,35 +40,17 @@ class KittenTTS:
             Audio data as numpy array
         """
         print(f"Generating audio for text: {text}")
-        return self.model.generate(
-            text,
-            voice=voice,
-            speed=speed,
-            clean_text=clean_text,
-            normalize=normalize,
-            locale=locale,
-            domain=domain,
-        )
+        return self.model.generate(text, voice=voice, speed=speed, clean_text=clean_text)
 
-    def generate_stream(self, text, voice="expr-voice-5-m", speed=1.0, clean_text=False,
-                        normalize=None, locale="en-US", domain="general-read-aloud"):
+    def generate_stream(self, text, voice="expr-voice-5-m", speed=1.0, clean_text=False):
         """Generate audio as a stream of chunks.
 
         Yields:
             numpy.ndarray: Audio data for each text chunk.
         """
-        yield from self.model.generate_stream(
-            text,
-            voice=voice,
-            speed=speed,
-            clean_text=clean_text,
-            normalize=normalize,
-            locale=locale,
-            domain=domain,
-        )
+        yield from self.model.generate_stream(text, voice=voice, speed=speed, clean_text=clean_text)
 
-    def generate_to_file(self, text, output_path, voice="expr-voice-5-m", speed=1.0, sample_rate=24000,
-                         clean_text=True, normalize=None, locale="en-US", domain="general-read-aloud"):
+    def generate_to_file(self, text, output_path, voice="expr-voice-5-m", speed=1.0, sample_rate=24000):
         """Generate audio from text and save to file.
         
         Args:
@@ -79,17 +60,7 @@ class KittenTTS:
             speed: Speech speed (1.0 = normal)
             sample_rate: Audio sample rate
         """
-        return self.model.generate_to_file(
-            text,
-            output_path,
-            voice=voice,
-            speed=speed,
-            sample_rate=sample_rate,
-            clean_text=clean_text,
-            normalize=normalize,
-            locale=locale,
-            domain=domain,
-        )
+        return self.model.generate_to_file(text, output_path, voice=voice, speed=speed, sample_rate=sample_rate)
     
     @property
     def available_voices(self):

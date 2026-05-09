@@ -5,7 +5,7 @@ from kittentts.preprocess import chunk_text
 
 
 class TextNormalizationTests(unittest.TestCase):
-    def test_issue_examples_normalize_for_read_aloud(self):
+    def test_issue_examples_normalize_for_tts(self):
         cases = {
             "Smith et al. 2024, pp. 31-35": "Smith et al twenty twenty-four pages thirty-one to thirty-five",
             "Fig. 2": "Figure two",

@@ -132,8 +132,6 @@ Synthesize speech from text, returning a NumPy array of audio samples at 24 kHz.
 | `voice` | `str` | `"expr-voice-5-m"` | Voice name (see available voices) |
 | `speed` | `float` | `1.0` | Speech speed multiplier |
 | `clean_text` | `bool` | `False` | Preprocess text (expand numbers, currencies, etc.) |
-| `normalize` | `bool` | `None` | Use read-aloud text normalization. When unset, follows `clean_text` for backward compatibility |
-| `locale` | `str` | `"en-US"` | Normalization locale. Currently supports English |
 
 ### `model.generate_to_file(text, output_path, voice, speed, sample_rate, clean_text)`
 
@@ -148,9 +146,9 @@ Synthesize speech and write directly to an audio file.
 | `sample_rate` | `int` | `24000` | Audio sample rate in Hz |
 | `clean_text` | `bool` | `True` | Preprocess text (expand numbers, currencies, etc.) |
 
-### `normalize_text(text, locale="en-US", domain="general-read-aloud", return_spans=False)`
+### `normalize_text(text, locale="en-US", return_spans=False)`
 
-Normalize text for read-aloud use without generating audio.
+Normalize text for TTS without generating audio.
 
 ```python
 from kittentts import normalize_text

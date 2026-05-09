@@ -650,7 +650,7 @@ class NormalizedSpan:
 
 @dataclass
 class NormalizedTextResult:
-    """Normalized read-aloud text plus optional original-to-normalized spans."""
+    """Normalized text plus optional original-to-normalized spans."""
 
     text: str
     spans: List[NormalizedSpan]
@@ -916,31 +916,26 @@ def _sub_with_spans(
 def normalize_text(
     text: str,
     locale: str = "en-US",
-    domain: str = "general-read-aloud",
     return_spans: bool = False,
 ) -> Union[str, NormalizedTextResult]:
-    """Normalize English text for read-aloud TTS use cases.
+    """Normalize English text for TTS use cases.
 
     Args:
         text: Input text to normalize.
         locale: Currently only "en-US" is supported.
-        domain: Currently only "general-read-aloud" is supported.
         return_spans: When true, return NormalizedTextResult instead of text.
     """
-    result = normalize_text_result(text, locale=locale, domain=domain)
+    result = normalize_text_result(text, locale=locale)
     return result if return_spans else result.text
 
 
 def normalize_text_result(
     text: str,
     locale: str = "en-US",
-    domain: str = "general-read-aloud",
 ) -> NormalizedTextResult:
     """Normalize English text and return span metadata for changed segments."""
     if locale.lower() not in {"en-us", "en"}:
         raise ValueError("Only en-US text normalization is currently supported")
-    if domain != "general-read-aloud":
-        raise ValueError("Only the general-read-aloud normalization domain is currently supported")
 
     text = normalize_unicode(text)
     origins = list(range(len(text)))

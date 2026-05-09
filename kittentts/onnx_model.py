@@ -114,29 +114,25 @@ class KittenTTS_1_Onnx:
             "speed": np.array([speed], dtype=np.float32),
         }
     
-    def normalize_text(self, text: str, locale: str = "en-US", domain: str = "general-read-aloud", return_spans: bool = False):
-        return normalize_text(text, locale=locale, domain=domain, return_spans=return_spans)
+    def normalize_text(self, text: str, locale: str = "en-US", return_spans: bool = False):
+        return normalize_text(text, locale=locale, return_spans=return_spans)
 
-    def generate(self, text: str, voice: str = "expr-voice-5-m", speed: float = 1.0, clean_text: bool=True,
-                 normalize: bool = None, locale: str = "en-US", domain: str = "general-read-aloud") -> np.ndarray:
+    def generate(self, text: str, voice: str = "expr-voice-5-m", speed: float = 1.0, clean_text: bool=True) -> np.ndarray:
         out_chunks = []
-        should_normalize = clean_text if normalize is None else normalize
-        if should_normalize:
-            text = normalize_text(text, locale=locale, domain=domain)
+        if clean_text:
+            text = self.preprocessor(text)
         for text_chunk in chunk_text(text):
             out_chunks.append(self.generate_single_chunk(text_chunk, voice, speed))
         return np.concatenate(out_chunks, axis=-1)
 
-    def generate_stream(self, text: str, voice: str = "expr-voice-5-m", speed: float = 1.0, clean_text: bool = True,
-                        normalize: bool = None, locale: str = "en-US", domain: str = "general-read-aloud"):
+    def generate_stream(self, text: str, voice: str = "expr-voice-5-m", speed: float = 1.0, clean_text: bool = True):
         """Generate audio chunk-by-chunk as a generator.
 
         Yields:
             numpy.ndarray: Audio data for each text chunk.
         """
-        should_normalize = clean_text if normalize is None else normalize
-        if should_normalize:
-            text = normalize_text(text, locale=locale, domain=domain)
+        if clean_text:
+            text = self.preprocessor(text)
         for text_chunk in chunk_text(text):
             yield self.generate_single_chunk(text_chunk, voice, speed)
 
@@ -161,8 +157,7 @@ class KittenTTS_1_Onnx:
         return audio
     
     def generate_to_file(self, text: str, output_path: str, voice: str = "expr-voice-5-m", 
-                          speed: float = 1.0, sample_rate: int = 24000, clean_text: bool=True,
-                          normalize: bool = None, locale: str = "en-US", domain: str = "general-read-aloud") -> None:
+                          speed: float = 1.0, sample_rate: int = 24000, clean_text: bool=True) -> None:
         """Synthesize speech and save to file.
         
         Args:
@@ -173,6 +168,6 @@ class KittenTTS_1_Onnx:
             sample_rate: Audio sample rate
             clean_text: If true, it will cleanup the text. Eg. replace numbers with words.
         """
-        audio = self.generate(text, voice, speed, clean_text=clean_text, normalize=normalize, locale=locale, domain=domain)
+        audio = self.generate(text, voice, speed, clean_text=clean_text)
         sf.write(output_path, audio, sample_rate)
         print(f"Audio saved to {output_path}")
