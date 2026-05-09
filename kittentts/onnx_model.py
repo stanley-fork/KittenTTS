@@ -7,54 +7,13 @@ import numpy as np
 import phonemizer
 import soundfile as sf
 import onnxruntime as ort
-from .preprocess import TextPreprocessor
+from .preprocess import TextPreprocessor, chunk_text, normalize_text
 
 def basic_english_tokenize(text):
     """Basic English tokenizer that splits on whitespace and punctuation."""
     import re
     tokens = re.findall(r"\w+|[^\w\s]", text)
     return tokens
-
-def ensure_punctuation(text):
-    """Ensure text ends with punctuation. If not, add a comma."""
-    text = text.strip()
-    if not text:
-        return text
-    if text[-1] not in '.!?,;:':
-        text = text + ','
-    return text
-
-
-def chunk_text(text, max_len=400):
-    """Split text into chunks for processing long texts."""
-    import re
-    
-    sentences = re.split(r'[.!?]+', text)
-    chunks = []
-    
-    for sentence in sentences:
-        sentence = sentence.strip()
-        if not sentence:
-            continue
-        
-        if len(sentence) <= max_len:
-            chunks.append(ensure_punctuation(sentence))
-        else:
-            # Split long sentences by words
-            words = sentence.split()
-            temp_chunk = ""
-            for word in words:
-                if len(temp_chunk) + len(word) + 1 <= max_len:
-                    temp_chunk += " " + word if temp_chunk else word
-                else:
-                    if temp_chunk:
-                        chunks.append(ensure_punctuation(temp_chunk.strip()))
-                    temp_chunk = word
-            if temp_chunk:
-                chunks.append(ensure_punctuation(temp_chunk.strip()))
-    
-    return chunks
-
 
 class TextCleaner:
     def __init__(self, dummy=None):
@@ -155,22 +114,29 @@ class KittenTTS_1_Onnx:
             "speed": np.array([speed], dtype=np.float32),
         }
     
-    def generate(self, text: str, voice: str = "expr-voice-5-m", speed: float = 1.0, clean_text: bool=True) -> np.ndarray:
+    def normalize_text(self, text: str, locale: str = "en-US", domain: str = "general-read-aloud", return_spans: bool = False):
+        return normalize_text(text, locale=locale, domain=domain, return_spans=return_spans)
+
+    def generate(self, text: str, voice: str = "expr-voice-5-m", speed: float = 1.0, clean_text: bool=True,
+                 normalize: bool = None, locale: str = "en-US", domain: str = "general-read-aloud") -> np.ndarray:
         out_chunks = []
-        if clean_text:
-            text = self.preprocessor(text)
+        should_normalize = clean_text if normalize is None else normalize
+        if should_normalize:
+            text = normalize_text(text, locale=locale, domain=domain)
         for text_chunk in chunk_text(text):
             out_chunks.append(self.generate_single_chunk(text_chunk, voice, speed))
         return np.concatenate(out_chunks, axis=-1)
 
-    def generate_stream(self, text: str, voice: str = "expr-voice-5-m", speed: float = 1.0, clean_text: bool = True):
+    def generate_stream(self, text: str, voice: str = "expr-voice-5-m", speed: float = 1.0, clean_text: bool = True,
+                        normalize: bool = None, locale: str = "en-US", domain: str = "general-read-aloud"):
         """Generate audio chunk-by-chunk as a generator.
 
         Yields:
             numpy.ndarray: Audio data for each text chunk.
         """
-        if clean_text:
-            text = self.preprocessor(text)
+        should_normalize = clean_text if normalize is None else normalize
+        if should_normalize:
+            text = normalize_text(text, locale=locale, domain=domain)
         for text_chunk in chunk_text(text):
             yield self.generate_single_chunk(text_chunk, voice, speed)
 
@@ -195,7 +161,8 @@ class KittenTTS_1_Onnx:
         return audio
     
     def generate_to_file(self, text: str, output_path: str, voice: str = "expr-voice-5-m", 
-                          speed: float = 1.0, sample_rate: int = 24000, clean_text: bool=True) -> None:
+                          speed: float = 1.0, sample_rate: int = 24000, clean_text: bool=True,
+                          normalize: bool = None, locale: str = "en-US", domain: str = "general-read-aloud") -> None:
         """Synthesize speech and save to file.
         
         Args:
@@ -206,7 +173,6 @@ class KittenTTS_1_Onnx:
             sample_rate: Audio sample rate
             clean_text: If true, it will cleanup the text. Eg. replace numbers with words.
         """
-        audio = self.generate(text, voice, speed, clean_text=clean_text)
+        audio = self.generate(text, voice, speed, clean_text=clean_text, normalize=normalize, locale=locale, domain=domain)
         sf.write(output_path, audio, sample_rate)
         print(f"Audio saved to {output_path}")
-
