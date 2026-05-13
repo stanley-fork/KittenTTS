@@ -2,6 +2,7 @@ import json
 import os
 from huggingface_hub import hf_hub_download
 from .onnx_model import KittenTTS_1_Onnx
+from .preprocess import normalize_text
 
 
 class KittenTTS:
@@ -23,6 +24,10 @@ class KittenTTS:
             
         self.model = download_from_huggingface(repo_id=repo_id, cache_dir=cache_dir, backend=backend)
     
+    def normalize_text(self, text, locale="en-US", return_spans=False):
+        """Normalize text for TTS without generating audio."""
+        return normalize_text(text, locale=locale, return_spans=return_spans)
+
     def generate(self, text, voice="expr-voice-5-m", speed=1.0, clean_text=False):
         """Generate audio from text.
         
